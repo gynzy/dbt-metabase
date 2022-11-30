@@ -891,11 +891,30 @@ class MetabaseClient:
         if not description:
             description = "No description provided in Metabase\n\n"
 
+        # logger().debug("extract_exposures: refable_models (ALL the dbt_models extracted from manifest.json): %s", refable_models)
+        # logger().debug("extract_exppiosures: models_exposed raw: %s", self.models_exposed)
+
+        models_exposed_lower = [
+                exposure.lower()
+                for exposure in list({m for m in self.models_exposed})
+        ]
+        models_exposed_lower.sort()
+        logger().debug("extract_exposures: models_exposed_lower: %s", models_exposed_lower)
+
+        depends_on = [
+                refable_models[exposure.upper()]
+                for exposure in list({m for m in self.models_exposed})
+                if exposure.upper() in refable_models
+        ]
+        depends_on.sort()
+        logger().debug("extract_exposures: depends_on: %s",depends_on)
+
         # Format metadata as markdown
         metadata = (
             "#### Metadata\n\n"
             + "Metabase Id: __{}__\n\n".format(exposure_id)
             + "Created On: __{}__".format(created_at)
+            + "Depends On: {}".format(models_exposed_lower)
         )
 
         # Build description
@@ -915,11 +934,7 @@ class MetabaseClient:
                 "name": creator_name,
                 "email": creator_email or "",
             },
-            "depends_on": [
-                refable_models[exposure.upper()]
-                for exposure in list({m for m in self.models_exposed})
-                if exposure.upper() in refable_models
-            ],
+            "depends_on": depends_on,
         }
 
     def api(
