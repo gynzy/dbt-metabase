@@ -8,6 +8,7 @@ import click
 import yaml
 
 from .logger import logging as package_logger
+from .logger.logging import logger
 from .models.interface import MetabaseInterface, DbtInterface
 from .utils import get_version, load_config
 
@@ -725,6 +726,24 @@ def exposures(
 
     # Load models
     dbt_models, _ = dbt.read_models()
+
+    logger().info(
+        "exposures: dbt_models extracted: %s",
+        len(dbt_models)
+    )
+
+    logger().debug(
+        "exposures: dbt_models: <schema.model_name> (all in '%s'): %s",
+        dbt_database.lower(),
+        [x.schema.lower() + "." + x.name.lower() for x in dbt_models]
+    )
+
+    # Log the complete raw MetabaseModels.
+    # logger().debug(
+    #     "exposures: dbt_models (all in '%s'): %s",
+    #     dbt_database.lower(),
+    #     dbt_models
+    # )
 
     # Instantiate Metabase interface
     metabase = MetabaseInterface(
