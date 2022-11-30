@@ -894,6 +894,7 @@ class MetabaseClient:
         # logger().debug("extract_exposures: refable_models (ALL the dbt_models extracted from manifest.json): %s", refable_models)
         # logger().debug("extract_exppiosures: models_exposed raw: %s", self.models_exposed)
 
+        # All the models that are used in the Card/Dashboard according to Metabase.
         models_exposed_lower = [
                 exposure.lower()
                 for exposure in list({m for m in self.models_exposed})
@@ -901,6 +902,15 @@ class MetabaseClient:
         models_exposed_lower.sort()
         logger().debug("extract_exposures: models_exposed_lower: %s", models_exposed_lower)
 
+        # Models according to Metabase INNER JOIN Models extracted from manifest.json.
+        # This way the references created in DBT docs are 100% valid and do not break the DAG.
+        # Can also mean that there are models in models_exposed which are not in depends_on!
+        # That is why we add the models_exposed from Metabase to the Description.
+        # PS. Be aware! 
+        # If you use the param `dbt-metabase exposures --dbt_includes model_a model_b` then 
+        # the `depends_on` generated here will at most contain model_a and model_b, and thus all other models
+        # found according to Metabase (in `self.models_exposed`) are filtered out and will not end up in the DBT docs
+        # section "Depends on" with hyperlinks and will not end up in the DAG!
         depends_on = [
                 refable_models[exposure.upper()]
                 for exposure in list({m for m in self.models_exposed})
